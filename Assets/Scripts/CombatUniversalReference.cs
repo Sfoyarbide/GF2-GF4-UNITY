@@ -1,0 +1,44 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class CombatUniversalReference : MonoBehaviour
+{
+    public static CombatUniversalReference Instance {get; private set;}
+    private BattleManager battleManager;
+    private SelectCharacterReceptor selectCharacterReceptor;
+    private PlayerInputCombat playerInputCombat;
+
+    private void Awake() 
+    {
+        if(Instance != null)
+        {
+            Debug.LogError("There more than one CombatUniversalReference: " + transform + " - " + Instance);
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
+
+    private void Start() 
+    {
+        battleManager = FindObjectOfType<BattleManager>();
+        selectCharacterReceptor = FindObjectOfType<SelectCharacterReceptor>();
+        playerInputCombat = FindObjectOfType<PlayerInputCombat>();
+    }
+
+    public BattleManager GetBattleManager()
+    {
+        return battleManager;
+    }
+
+    public SelectCharacterReceptor GetSelectCharacterReceptor()
+    {
+        return selectCharacterReceptor;
+    }
+
+    public PlayerInputCombat GetPlayerInputCombat()
+    {
+        return playerInputCombat;
+    }
+}
