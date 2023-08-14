@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,7 +10,9 @@ public class Character : MonoBehaviour
     
     // Main Stats
     [SerializeField] private int hp;
+    [SerializeField] private int hpMax;
     [SerializeField] private int sp;
+    [SerializeField] private int spMax;
     [SerializeField] private int lv;
     [SerializeField] private int xp;
     [SerializeField] private int xpForNextLevel;
@@ -22,6 +25,12 @@ public class Character : MonoBehaviour
     [SerializeField] private int co;
     // Actions
     [SerializeField] private List<BaseAction> baseActionList;
+    // Events
+    public event EventHandler<OnHpChangedEventArgs> OnHpChanged;
+    public class OnHpChangedEventArgs : EventArgs
+    {
+        public bool isLessThanBefore;
+    }
 
     private void Awake() 
     {
@@ -32,7 +41,21 @@ public class Character : MonoBehaviour
 
     public void SetHp(int newValue)
     {
-        hp = newValue; 
+        int previousHp = hp;
+        OnHpChangedEventArgs onHpChangedEventArgs = new OnHpChangedEventArgs();
+
+        hp = newValue;
+        if(hp > hpMax)
+        {
+            hp = hpMax;
+        }
+
+        if(hp < previousHp)
+        {
+            onHpChangedEventArgs.isLessThanBefore = true;
+        }
+
+        OnHpChanged(this, onHpChangedEventArgs);
     }
 
     public void SetSp(int newValue)
@@ -140,19 +163,19 @@ public class Character : MonoBehaviour
         return baseActionList[0];
     }
 
-    public void IncreaseHp()
+    public void IncreaseHpMax()
     {
-        hp = hp + 30 + co / 2;
+        hpMax = hpMax + 30 + co / 2;
     }
 
-    public void IncreaseSp()
+    public void IncreaseSpMax()
     {
-        sp += 15 + ma / 4;
+        spMax += 15 + ma / 4;
     }
 
     public int IncreaseStat(int stat)
     {
-        return stat += Random.Range(1, 3);
+        return stat += UnityEngine.Random.Range(1, 3);
     }
 
     public List<BaseAction> GetBaseActionList()

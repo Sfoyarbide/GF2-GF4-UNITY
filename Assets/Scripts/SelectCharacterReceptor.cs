@@ -23,10 +23,7 @@ public class SelectCharacterReceptor : MonoBehaviour
 
     private void UpdateSelectableCharacterList(bool invertCollection)
     {
-        if(selectableCharacterList.Count > 0)
-        {
-            selectableCharacterList.Clear();
-        }
+        selectableCharacterList.Clear();
         if(!invertCollection)
         {
             selectableCharacterList.AddRange(CombatUniversalReference.Instance.GetBattleManager().GetEnemyList()); // First the enemys in the collection.

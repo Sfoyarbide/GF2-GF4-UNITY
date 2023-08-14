@@ -5,11 +5,21 @@ using UnityEngine;
 
 public class CharacterData : MonoBehaviour
 {
+    // Stats
     [SerializeField] private int weaponDamage;
     [SerializeField] private int armorDefense;
+    // Skills
     [SerializeField] private List<Skill> skillList;
     [SerializeField] private int indexSkill;
+    // States
     private bool isDefending;
+    // Events
+    public event EventHandler<OnIsDefendingChangedEventArgs> OnIsDefendingChanged;
+    public class OnIsDefendingChangedEventArgs : EventArgs
+    {
+        public bool isDefending;
+    }
+
 
     public int GetIndexSkill()
     {
@@ -64,5 +74,8 @@ public class CharacterData : MonoBehaviour
     public void SetIsDefending(bool newValue)
     {
         isDefending = newValue;
+        OnIsDefendingChanged?.Invoke(this, new OnIsDefendingChangedEventArgs{
+            isDefending = this.isDefending
+        });
     }
 }

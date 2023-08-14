@@ -29,8 +29,8 @@ public class LevelSystem : MonoBehaviour
     public static void LevelUp(Character character)
     {
         character.SetLv(character.GetLv() + 1); // Level Up
-        character.IncreaseHp();
-        character.IncreaseSp();
+        character.IncreaseHpMax();
+        character.IncreaseSpMax();
         int howManyStatToIncrease = Random.Range(1,3); // Numbers of stats to increase. 
 
         for(int x = 0; x < howManyStatToIncrease; x++)

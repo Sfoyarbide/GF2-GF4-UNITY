@@ -12,6 +12,7 @@ public class Skill : ScriptableObject
     {
         Fire,
         Ice,
+        Heal
     } 
     public SkillType skillType;
 }

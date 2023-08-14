@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEngine;
 
 public class BattleManager : MonoBehaviour
@@ -20,7 +21,7 @@ public class BattleManager : MonoBehaviour
 
     public void ExecuteAction(Character characterReceptor)
     {
-        selectedAction.TakeAction(GetCurrentCharacter(), characterReceptor); // Executes the wanted action.
+        selectedAction.TakeAction(characterReceptor, NextTurn); // Executes the wanted action.
         CombatUniversalReference.Instance.GetSelectCharacterReceptor().CancelSelection(); // Cancels the selection mode;
     }
 
@@ -38,7 +39,7 @@ public class BattleManager : MonoBehaviour
         if(!GetCurrentCharacter().IsEnemy())
         {
             // Waiting For Player Input Combat.
-            CombatUniversalReference.Instance.GetPlayerInputCombat().SetWaitingInput(true, NextTurn);
+            CombatUniversalReference.Instance.GetPlayerInputCombat().SetWaitingInput(true);
         }
         else
         {
@@ -55,6 +56,11 @@ public class BattleManager : MonoBehaviour
         UpdateAllyList();
         OnCharacterChanged?.Invoke(this, EventArgs.Empty);
         SetSelectedAction(GetCurrentCharacter().GetDefaultBaseAction());
+    }
+
+    public BaseAction GetSelectedAction()
+    {
+        return selectedAction;
     }
 
     public void SetSelectedAction(BaseAction baseAction)

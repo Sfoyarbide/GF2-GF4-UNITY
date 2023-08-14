@@ -1,15 +1,21 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class SkillAction : BaseAction
 {
-    // NOTE: ADD THE ILLNESS MECHANIC.
-
-    private void IsSkill(Character character, Character characterReceptor)
+    private Character characterReceptor;
+    public event EventHandler<OnSkillCastEventArgs> OnSkillCast;
+    public class OnSkillCastEventArgs : EventArgs
     {
-        Skill skill = character.GetCharacterData().GetSkillsList()[character.GetCharacterData().GetIndexSkill()];
-        
+        public Skill.SkillType skillType;
+    }
+    // NOTE: ADD THE ILLNESS MECHANIC.
+    // REWORK THE ONACTIONCOMPLETE.
+
+    private static void IsSkill(Character character, Character characterReceptor, Skill skill)
+    {  
         if(character.GetSp() < skill.baseMana)
         {
             Debug.Log("No mana");
@@ -22,7 +28,7 @@ public class SkillAction : BaseAction
 
         int agCharacterReceptor = characterReceptor.GetAg();
 
-        int dice = Random.Range(0, 10);
+        int dice = UnityEngine.Random.Range(0, 10);
         
         if(CombatCalculations.CheckIsHit(characterChance, agCharacterReceptor, dice))
         {
@@ -35,7 +41,7 @@ public class SkillAction : BaseAction
         }
     }
 
-    private void Skill(Character character, Character characterReceptor, Skill skill)
+    private static void Skill(Character character, Character characterReceptor, Skill skill)
     {
         int hp = characterReceptor.GetHp(); // Getting receptor's hp. 
         int armorDefense = characterReceptor.GetCharacterData().GetArmorDefense();
@@ -54,13 +60,49 @@ public class SkillAction : BaseAction
         characterReceptor.SetHp(newHp);
     }
 
+    private static void HealSkill(Character characterReceptor, Skill skill)
+    {
+        int hp = characterReceptor.GetHp(); // Getting receptor's hp. 
+        int healAmount = skill.baseDamage; // baseDamage is refering to the healAmount in this case.
+        int newHp = hp + healAmount;
+        characterReceptor.SetHp(newHp);
+    }
+
     public override string GetActionName()
     {
         return "Skill";
     }
 
-    public override void TakeAction(Character character, Character characterReceptor)
+    private void ExecuteSkill(Skill skill)
     {
-        IsSkill(character, characterReceptor);
+        float timeToCompleteAction = 1f;
+        if(skill.skillType != global::Skill.SkillType.Heal) 
+        {
+            IsSkill(character, characterReceptor, skill);
+        }
+        else // If the skill type is healing, you cannot fail the cast, therefore you use HealSkill.
+        {
+            HealSkill(characterReceptor, skill);
+            timeToCompleteAction = 1.5f;
+        }
+
+        OnSkillCast?.Invoke(this, new OnSkillCastEventArgs{
+            skillType = skill.skillType
+        });
+
+        Invoke("CallOnActionComplete", timeToCompleteAction);
+    }
+
+    private void CallOnActionComplete()
+    {
+        onActionComplete();
+    }
+
+    public override void TakeAction(Character characterReceptor, Action onActionComplete)
+    {
+        Skill skill = character.GetCharacterData().GetSkillsList()[character.GetCharacterData().GetIndexSkill()];
+        this.characterReceptor = characterReceptor;
+        this.onActionComplete = onActionComplete;
+        ExecuteSkill(skill);
     }
 }

@@ -8,7 +8,6 @@ public class PlayerInputCombat : MonoBehaviour
 {
     // NOTE: REWORK THIS SYSTEM.
     public static PlayerInputCombat Instance {get; private set;}
-    private Action onActionSelected;
     private BattleManager battleManager;
     private bool waitingAction;
 
@@ -33,10 +32,9 @@ public class PlayerInputCombat : MonoBehaviour
         return waitingAction;
     }
 
-    public void SetWaitingInput(bool newValue, Action onActionSelected)
+    public void SetWaitingInput(bool newValue)
     {
         waitingAction = newValue;
-        this.onActionSelected = onActionSelected; 
     }
 
     public void HandleActionInput()
@@ -62,7 +60,7 @@ public class PlayerInputCombat : MonoBehaviour
             }
         }
         if(Input.GetKeyDown(keyCodeRight))
-        { // test
+        { 
             if(index < max)
             {
                 newIndexValue++;
@@ -77,9 +75,17 @@ public class PlayerInputCombat : MonoBehaviour
 
     public void PlayerExecuteAction()
     {
-        Character characterReceptor = CombatUniversalReference.Instance.GetSelectCharacterReceptor().GetCharacterReceptor();
+        BaseAction baseAction = CombatUniversalReference.Instance.GetBattleManager().GetSelectedAction();
+        Character characterReceptor; 
+        if(baseAction as DefendAction)
+        {
+            characterReceptor = CombatUniversalReference.Instance.GetBattleManager().GetCurrentCharacter();
+        }
+        else
+        {
+            characterReceptor = CombatUniversalReference.Instance.GetSelectCharacterReceptor().GetCharacterReceptor();
+        }
         CombatUniversalReference.Instance.GetBattleManager().ExecuteAction(characterReceptor);
         waitingAction = false;
-        onActionSelected();
     }
 }

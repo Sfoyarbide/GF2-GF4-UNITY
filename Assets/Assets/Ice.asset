@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nameSkill: Ice
   baseDamage: 5
-  baseMana: 0
+  baseMana: 3
   skillType: 1
