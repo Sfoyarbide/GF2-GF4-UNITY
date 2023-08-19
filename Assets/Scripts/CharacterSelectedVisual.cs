@@ -10,24 +10,31 @@ public class CharacterSelectedVisual : MonoBehaviour
 
     private void Start() 
     {
-        CombatUniversalReference.Instance.GetSelectCharacterReceptor().OnSelectedCharacterReceptorChanged += SelectCharacterReceptor_OnSelectedCharacterReceptorChanged;
-        CombatUniversalReference.Instance.GetSelectCharacterReceptor().OnSelectedCharacterReceptorFinished += SelectCharacterReceptor_OnSelectedCharacterReceptorFinished;
+        SelectCharacterReceptor selectCharacterReceptor = CombatUniversalReference.Instance.GetSelectCharacterReceptor();
+        selectCharacterReceptor.OnSelectedCharacterReceptorChanged += SelectCharacterReceptor_OnSelectedCharacterReceptorChanged;
+        selectCharacterReceptor.OnSelectedCharacterReceptorCanceled += SelectCharacterReceptor_OnSelectedCharacterReceptorCanceled;
+        selectCharacterReceptor.OnSelectedCharacterReceptorComplete += SelectCharacterReceptor_OnSelectedCharacterReceptorCompleted;
         selectedVisual.SetActive(false);
     }
 
-    private void SelectCharacterReceptor_OnSelectedCharacterReceptorFinished(object sender, EventArgs e)
+    private void SelectCharacterReceptor_OnSelectedCharacterReceptorCompleted(object sender, EventArgs e)
     {
         HideVisual();
     }
 
-    private void SelectCharacterReceptor_OnSelectedCharacterReceptorChanged(object sender, EventArgs e)
+    private void SelectCharacterReceptor_OnSelectedCharacterReceptorCanceled(object sender, EventArgs e)
     {
-        UpdateSelectedVisual();
+        HideVisual();
     }
 
-    private void UpdateSelectedVisual()
+    private void SelectCharacterReceptor_OnSelectedCharacterReceptorChanged(object sender, SelectCharacterReceptor.OnSelectedCharacterReceptorEventArgs e)
     {
-        if(CombatUniversalReference.Instance.GetSelectCharacterReceptor().GetCharacterReceptor() == character)
+        UpdateSelectedVisual(e.characterReceptor);
+    }
+
+    private void UpdateSelectedVisual(Character characterReceptor)
+    {
+        if(characterReceptor == character)
         {
             selectedVisual.SetActive(true);
         }

@@ -6,12 +6,14 @@ using UnityEngine;
 
 public class CharacterAnimator : MonoBehaviour
 {
+    private Character character;
     [SerializeField] private Animator animator;
 
     private void Start() 
     {
-        if(TryGetComponent<Character>(out Character character))
+        if(TryGetComponent<Character>(out Character characterOut))
         {
+            character = characterOut;
             character.OnHpChanged += Character_OnHpChanged;
             CharacterData characterData = character.GetCharacterData();
             characterData.OnIsDefendingChanged += CharacterData_OnIsDefendingChanged;
@@ -24,16 +26,18 @@ public class CharacterAnimator : MonoBehaviour
             attackAction.OnAttackFinished += AttackAction_OnAttackFinished;
         } 
 
-        if(TryGetComponent<SkillAction>(out SkillAction skillAction))
-        {
-            skillAction.OnSkillCast += SkillAction_OnSkillCast;
-        }
+        SkillAction.OnSkillCast += SkillAction_OnSkillCast;
     }
 
     private void SkillAction_OnSkillCast(object sender, SkillAction.OnSkillCastEventArgs e)
     {
+        if(e.character != character)
+        {
+            return;
+        }
+
         string castString = "Cast";
-        switch(e.skillType)
+        switch(e.skill.skillType)
         {
             case Skill.SkillType.Heal:
                 castString += "Heal";

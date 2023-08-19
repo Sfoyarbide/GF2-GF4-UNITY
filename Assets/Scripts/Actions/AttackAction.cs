@@ -4,11 +4,18 @@ using UnityEngine;
 
 public class AttackAction : BaseAction
 {
+    // Add: GoBackToOrignalPlace.
+
     public event EventHandler OnAttackStarted;
     public event EventHandler OnAttackFinished;
     public event EventHandler OnAttack;
-    public event EventHandler OnAttackSuccessful;
-    public event EventHandler OnAttackFailed;
+    public static event EventHandler<OnAttackStateEventArgs> OnAttackStatus;
+    public class OnAttackStateEventArgs : EventArgs
+    {
+        public Character characterReceptor;
+        public bool attackStatus;
+        public int damage;
+    }
 
     private float speedRotate = 4f;
     private float speedMovement = 7f;
@@ -28,23 +35,24 @@ public class AttackAction : BaseAction
         ExecuteAttack();
     }
 
-    public static bool IsAttack(Character character, Character characterReceptor) // Checks if you hit, and execute the attack.
+    public static bool IsAttack(Character character, Character characterReceptor, out int outDamage) // Checks if you hit, and execute the attack.
     {
         int agCharacter = character.GetAg();
         int agCharacterReceptor = characterReceptor.GetAg();
         int dice = UnityEngine.Random.Range(0, 10);
         if(CombatCalculations.CheckIsHit(agCharacter, agCharacterReceptor, dice))
         {
-            Attack(character, characterReceptor);
+            Attack(character, characterReceptor, out outDamage);
             return true;
         }
         else
         {
+            outDamage = 0;
             return false;
         }
     }
 
-    public static void Attack(Character character, Character characterReceptor)
+    public static void Attack(Character character, Character characterReceptor, out int outDamage)
     {
         int hp = characterReceptor.GetHp(); // Getting receptor's hp. 
         int weaponDamage = character.GetCharacterData().GetWeaponDamage(); // Getting character's weapon damage. 
@@ -61,7 +69,7 @@ public class AttackAction : BaseAction
         }
 
         damage += bonusDamage; // Adding the damage bonus. 
-
+        outDamage = damage;
         DefendAction.CancelDefend(characterReceptor); // Checks if the receptor is in defend mode, and executes the logic of canceling a defend.
 
         int newHp = hp - damage; // Final subtraction. 
@@ -100,7 +108,7 @@ public class AttackAction : BaseAction
         targetPosition = testTargetPosition + new Vector3(0,0, zOffset);
     }
 
-    private void ExecuteAttack() // Makes the final conformation the Attack Action.
+    private void ExecuteAttack() // Does all the visual and logic aspects of Attack Action.
     {
         if(!isAttacking)
         {
@@ -114,15 +122,16 @@ public class AttackAction : BaseAction
         float stoppingDistance = 0.2f;
         if(Vector3.Distance(transform.position, targetPosition) < stoppingDistance)
         {
-            OnAttack?.Invoke(this, EventArgs.Empty); 
-            if(IsAttack(character, characterReceptor))
-            {
-                OnAttackSuccessful?.Invoke(this, EventArgs.Empty); // Attack successful event.
-            }
-            else
-            {
-                OnAttackFailed?.Invoke(this, EventArgs.Empty); // Attack failed event.
-            }
+            OnAttack?.Invoke(this, EventArgs.Empty);
+
+            // Does all the Attack Action logic. 
+            bool isAttack = IsAttack(character, characterReceptor, out int outDamage); 
+            OnAttackStatus?.Invoke(this, new OnAttackStateEventArgs{
+                characterReceptor = this.characterReceptor,
+                attackStatus = isAttack,
+                damage = outDamage
+            }); // Attack status.
+            
             Invoke("AfterAttackActionIsComplete", 1f);
             isAttacking = false;
             onActionComplete();

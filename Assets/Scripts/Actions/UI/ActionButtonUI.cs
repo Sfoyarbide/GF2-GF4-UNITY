@@ -38,6 +38,7 @@ public class ActionButtonUI : MonoBehaviour
                 }
                 else
                 {
+                    CombatUniversalReference.Instance.GetBattleManager().SetSelectedAction(null);
                     CombatUniversalReference.Instance.GetSelectCharacterReceptor().CancelSelection();
                     HasBeenPressed = false;
                 }
@@ -55,6 +56,7 @@ public class ActionButtonUI : MonoBehaviour
                 else
                 {
                     actionsUI.ShowSkillList(); // Close skill list.
+                    CombatUniversalReference.Instance.GetBattleManager().SetSelectedAction(null);
                     CombatUniversalReference.Instance.GetSelectCharacterReceptor().CancelSelection();
                     HasBeenPressed = false;
                 }

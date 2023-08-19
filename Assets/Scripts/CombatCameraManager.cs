@@ -1,65 +1,142 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
 
 public class CombatCameraManager : MonoBehaviour
-{
+{ 
+    // NOTE: WHEN SKILL IS CANCEL, CANCEL THE CAMERA AS WELL.
     [SerializeField] private CinemachineVirtualCamera characterSelectedCamera;
     [SerializeField] private CinemachineVirtualCamera characterSelectingReceptorCamera;
-    [SerializeField] private CinemachineVirtualCamera characterDoingActionCamera;
+    [SerializeField] private CinemachineVirtualCamera characterSkillActionCamera;
+    [SerializeField] private GameObject currentCamera;
+    public event EventHandler<OnActionIsSkillEventArgs> OnActionIsSkill; // To send information to CharacterSkillActionCamera.
+    public class OnActionIsSkillEventArgs : EventArgs
+    {
+        public Skill skill;
+    }
 
     private void Start() 
     {
         CombatUniversalReference.Instance.GetBattleManager().OnCharacterChanged += BattleManager_OnCharacterChanged;
+        CombatUniversalReference.Instance.GetBattleManager().OnActionExecute += BattleManager_OnActionExecute; 
+        CombatUniversalReference.Instance.GetBattleManager().OnTurnEnd += BattleManager_OnTurnEnd;
         CombatUniversalReference.Instance.GetSelectCharacterReceptor().OnSelectedCharacterReceptorStarted += SelectCharacterReceptor_OnSelectedCharacterReceptorStarted; 
         CombatUniversalReference.Instance.GetSelectCharacterReceptor().OnSelectedCharacterReceptorChanged += SelectCharacterReceptor_OnSelectedCharacterReceptorChanged;
-        CombatUniversalReference.Instance.GetSelectCharacterReceptor().OnSelectedCharacterReceptorFinished += SelectCharacterReceptor_OnSelectedCharacterReceptorFinish;
+        CombatUniversalReference.Instance.GetSelectCharacterReceptor().OnSelectedCharacterReceptorCanceled += SelectCharacterReceptor_OnSelectedCharacterReceptorCanceled;
+        SetAllCamerasToState(false, characterSkillActionCamera.gameObject);
+        characterSelectedCamera.gameObject.SetActive(true);
+        currentCamera = characterSelectedCamera.gameObject;
         UpdateCharacterSelectedCamera();
+    }
+
+    private void BattleManager_OnActionExecute(object sender, BattleManager.OnActionExecuteEventArgs e)
+    {
+        // Checks the selected action, and based on that we can set the proper camera.
+        BaseAction baseAction = CombatUniversalReference.Instance.GetBattleManager().GetSelectedAction();
+        switch(baseAction)
+        {
+            case AttackAction attackAction:
+                ChangeCamera(characterSelectedCamera.gameObject);
+                UpdateCharacterSelectedCamera();
+                break;
+            case SkillAction skillAction:
+                ChangeCamera(characterSkillActionCamera.gameObject);
+                UpdateCharacterSkillActionCamera();
+                OnActionIsSkill?.Invoke(this, new OnActionIsSkillEventArgs{
+                    skill = skillAction.GetCurrentSkill()
+                });
+                break;
+        }
+    }
+
+    private void BattleManager_OnTurnEnd(object sender, EventArgs e)
+    {
+        // If the turns end, then we set the CharacterSelectedCamera.
+        ChangeCamera(characterSelectedCamera.gameObject);
     }
 
     private void BattleManager_OnCharacterChanged(object sender, EventArgs e)
     {
+        // Updates the camera if the character changes.
         UpdateCharacterSelectedCamera();
     }
 
     private void SelectCharacterReceptor_OnSelectedCharacterReceptorStarted(object sender, EventArgs e)
     {
-        UpdateActualCamera(characterSelectedCamera.gameObject, characterSelectingReceptorCamera.gameObject);
+        // If the SelectedCharacterReceptor stats his selection then we set the CharacterSelectingReceptorCamera and update it. 
+        ChangeCamera(characterSelectingReceptorCamera.gameObject);
         UpdateCharacterSelectingReceptorCamera();
     }
 
-    private void SelectCharacterReceptor_OnSelectedCharacterReceptorFinish(object sender, EventArgs e)
+    private void SelectCharacterReceptor_OnSelectedCharacterReceptorCanceled(object sender, EventArgs e)
     {
-        UpdateActualCamera(characterSelectingReceptorCamera.gameObject, characterSelectedCamera.gameObject);
-        UpdateCharacterSelectedCamera();
+        // When the selection is canceled we set the CharacterSelectedCamera.
+        ChangeCamera(characterSelectedCamera.gameObject);
     }
 
     private void SelectCharacterReceptor_OnSelectedCharacterReceptorChanged(object sender, EventArgs e)
     {
-        UpdateCharacterSelectingReceptorCamera();
+        // When SelectedCharacterReceptor changes, it updates characterSelectingReceptorCamera.
+        UpdateCharacterSelectingReceptorCamera(); 
     }
 
-    private void UpdateActualCamera(GameObject previousCamera, GameObject actualCamera)
+    private void ChangeCamera(GameObject newCamera)
     {
-        previousCamera.SetActive(false);
-        actualCamera.SetActive(true);
+        // Changes and set a new camera
+        currentCamera.SetActive(false);
+        newCamera.SetActive(true);
+        currentCamera = newCamera;
+    }
+
+    private void UpdateCamera(CinemachineVirtualCamera camera, Transform characterTransform, bool isOnlyLookAt=false, bool isOnlyFollow=false)
+    {
+        // Updates a camera to their target Transform.
+        if(!isOnlyFollow) // if is only follow then, we won't change the lookAt.
+        {
+            camera.LookAt = characterTransform;
+        }
+        if(!isOnlyLookAt) // if is only lookAt then, we won't change the follow.
+        {
+            camera.Follow = characterTransform;
+        }
+        currentCamera = camera.gameObject;
     }
 
     private void UpdateCharacterSelectedCamera() // Updates the CharacterSelectedCamera to his position.
     {
         Character currentCharacter = CombatUniversalReference.Instance.GetBattleManager().GetCurrentCharacter();
         Transform currentCharacterTransform = currentCharacter.transform;
-        characterSelectedCamera.Follow = currentCharacterTransform;
-        characterSelectedCamera.LookAt = currentCharacterTransform;
+        UpdateCamera(characterSelectedCamera, currentCharacterTransform);
+        UpdateCamera(characterSelectingReceptorCamera, currentCharacterTransform, false, true); // Update the characterSelectingReceptorCamera follow
     }
 
-    private void UpdateCharacterSelectingReceptorCamera()
+    private void UpdateCharacterSelectingReceptorCamera() // Updates the CharacterSelectingReceptorCamera.
     {
         Character currentCharacterReceptor = CombatUniversalReference.Instance.GetSelectCharacterReceptor().GetCharacterReceptor();
         Transform currentCharacterReceptorTransform = currentCharacterReceptor.transform;
-        characterSelectingReceptorCamera.transform.position = characterSelectedCamera.transform.position;
-        characterSelectingReceptorCamera.LookAt = currentCharacterReceptorTransform;
+        UpdateCamera(characterSelectingReceptorCamera, currentCharacterReceptorTransform, true);
+    }
+
+    private void UpdateCharacterSkillActionCamera() // Updates the CharacterSkillActionCamera.
+    {
+        Character currentCharacter = CombatUniversalReference.Instance.GetBattleManager().GetCurrentCharacter();
+        Transform currentCharacterTransform = currentCharacter.transform;
+        UpdateCamera(characterSkillActionCamera, currentCharacterTransform);
+    }
+
+    private void SetAllCamerasToState(bool state, GameObject notThisCamera=null)
+    {
+        if(notThisCamera != characterSelectedCamera.gameObject)
+        {
+            characterSelectedCamera.gameObject.SetActive(state);
+        }
+        if(notThisCamera != characterSelectingReceptorCamera.gameObject)
+        {
+            characterSelectingReceptorCamera.gameObject.SetActive(state);
+        }
+        if(notThisCamera != characterSkillActionCamera.gameObject)
+        {
+            characterSkillActionCamera.gameObject.SetActive(state);
+        }
     }
 }

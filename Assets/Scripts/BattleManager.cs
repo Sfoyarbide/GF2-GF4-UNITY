@@ -9,7 +9,15 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private List<Character> characterTurnList;
     [SerializeField] private List<Character> enemyList;
     [SerializeField] private List<Character> allyList;
+
     public event EventHandler OnCharacterChanged;
+    public event EventHandler<OnActionExecuteEventArgs> OnActionExecute;
+    public class OnActionExecuteEventArgs : EventArgs
+    {
+        public BaseAction action;
+    }
+    public event EventHandler OnTurnEnd;
+
     [SerializeField] private int indexTurn;
     [SerializeField] private BaseAction selectedAction;
     private bool inAction;
@@ -21,8 +29,19 @@ public class BattleManager : MonoBehaviour
 
     public void ExecuteAction(Character characterReceptor)
     {
+        if(inAction) // Checks if it was already in action.
+        {
+            return; 
+        }
+
+        SetInAction(true); // Sets in action.
+        
         selectedAction.TakeAction(characterReceptor, NextTurn); // Executes the wanted action.
-        CombatUniversalReference.Instance.GetSelectCharacterReceptor().CancelSelection(); // Cancels the selection mode;
+        CombatUniversalReference.Instance.GetSelectCharacterReceptor().CompleteSelection(); // Cancels the selection mode;
+        
+        OnActionExecute?.Invoke(this, new OnActionExecuteEventArgs{
+            action = selectedAction
+        });
     }
 
     public void SetupBattle(List<Character> newCharacterTurnList)
@@ -49,7 +68,8 @@ public class BattleManager : MonoBehaviour
 
     public void NextTurn()
     {
-        DequeueCurrentCharacter();
+        OnTurnEnd?.Invoke(this, EventArgs.Empty);
+        DequeueCurrentCharacter(); 
         SetInAction(false);
         CheckTurn();
         UpdateEnemyList();

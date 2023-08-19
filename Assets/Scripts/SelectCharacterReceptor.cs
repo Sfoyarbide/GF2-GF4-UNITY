@@ -1,16 +1,20 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.ShaderGraph.Serialization;
 using UnityEngine;
 
 public class SelectCharacterReceptor : MonoBehaviour
 {
     [SerializeField] private List<Character> selectableCharacterList;
     [SerializeField] private int index;
-    public event EventHandler OnSelectedCharacterReceptorChanged;
+    public event EventHandler<OnSelectedCharacterReceptorEventArgs> OnSelectedCharacterReceptorChanged;
     public event EventHandler OnSelectedCharacterReceptorStarted;
-    public event EventHandler OnSelectedCharacterReceptorFinished;
+    public event EventHandler OnSelectedCharacterReceptorCanceled;
+    public event EventHandler OnSelectedCharacterReceptorComplete;
+    public class OnSelectedCharacterReceptorEventArgs : EventArgs
+    {
+        public Character characterReceptor;
+    }
     private bool canSelect;
 
     public void SetupSelection(bool invertCollection)
@@ -18,7 +22,9 @@ public class SelectCharacterReceptor : MonoBehaviour
         UpdateSelectableCharacterList(invertCollection);
         canSelect = true;
         OnSelectedCharacterReceptorStarted?.Invoke(this, EventArgs.Empty);
-        OnSelectedCharacterReceptorChanged?.Invoke(this, EventArgs.Empty);
+        OnSelectedCharacterReceptorChanged?.Invoke(this, new OnSelectedCharacterReceptorEventArgs{
+            characterReceptor = GetCharacterReceptor()
+        });
     }
 
     private void UpdateSelectableCharacterList(bool invertCollection)
@@ -43,7 +49,13 @@ public class SelectCharacterReceptor : MonoBehaviour
 
     public void CancelSelection()
     {
-        OnSelectedCharacterReceptorFinished?.Invoke(this, EventArgs.Empty);
+        OnSelectedCharacterReceptorCanceled?.Invoke(this, EventArgs.Empty);
+        canSelect = false;
+    }
+
+    public void CompleteSelection()
+    {
+        OnSelectedCharacterReceptorComplete?.Invoke(this, EventArgs.Empty);
         canSelect = false;
     }
 
@@ -57,7 +69,9 @@ public class SelectCharacterReceptor : MonoBehaviour
         index = PlayerInputCombat.Instance.MoveTheIndex(0, selectableCharacterList.Count - 1, index);
         if(previousIndex != index)
         {
-            OnSelectedCharacterReceptorChanged?.Invoke(this, EventArgs.Empty);
+            OnSelectedCharacterReceptorChanged?.Invoke(this, new OnSelectedCharacterReceptorEventArgs{
+                characterReceptor = GetCharacterReceptor()
+            });
         }
     }
 }

@@ -5,21 +5,31 @@ using UnityEngine;
 
 public class SkillAction : BaseAction
 {
-    private Character characterReceptor;
-    public event EventHandler<OnSkillCastEventArgs> OnSkillCast;
-    public class OnSkillCastEventArgs : EventArgs
-    {
-        public Skill.SkillType skillType;
-    }
     // NOTE: ADD THE ILLNESS MECHANIC.
     // REWORK THE ONACTIONCOMPLETE.
+    // REWORK GetSp.
+    private Character characterReceptor;
+    public static event EventHandler<OnSkillCastEventArgs> OnSkillCast;
+    public static event EventHandler<OnAttackStateEventArgs> OnAttackStatus;
+    public class OnSkillCastEventArgs : EventArgs
+    {
+        public Character character;
+        public Skill skill;
+    }
+    public class OnAttackStateEventArgs : EventArgs
+    {
+        public Character characterReceptor;
+        public bool attackStatus;
+        public int damage;
+    }
 
-    private static void IsSkill(Character character, Character characterReceptor, Skill skill)
+    private static bool IsSkill(Character character, Character characterReceptor, Skill skill, out int outDamage)
     {  
         if(character.GetSp() < skill.baseMana)
         {
             Debug.Log("No mana");
-            return;
+            outDamage = 0;
+            return false;
         }
 
         int maCharacter = character.GetMa();
@@ -33,21 +43,25 @@ public class SkillAction : BaseAction
         if(CombatCalculations.CheckIsHit(characterChance, agCharacterReceptor, dice))
         {
             Debug.Log("HitSkill");
-            Skill(character, characterReceptor, skill);
+            Skill(character, characterReceptor, skill, out outDamage);
+            return true;
         }
         else
         {
             Debug.Log("Miss");
+            outDamage = 0;
+            return false;
         }
     }
 
-    private static void Skill(Character character, Character characterReceptor, Skill skill)
+    private static void Skill(Character character, Character characterReceptor, Skill skill, out int outDamage)
     {
         int hp = characterReceptor.GetHp(); // Getting receptor's hp. 
         int armorDefense = characterReceptor.GetCharacterData().GetArmorDefense();
         int damage;
         
         damage = CombatCalculations.CalculateDamage(skill.baseDamage, armorDefense);
+        outDamage = damage;
 
         if(damage <= 0)
         {
@@ -73,21 +87,30 @@ public class SkillAction : BaseAction
         return "Skill";
     }
 
-    private void ExecuteSkill(Skill skill)
+    private void ExecuteSkill(Skill skill) // Does all visual and logic aspects of Skill Action.
     {
-        float timeToCompleteAction = 1f;
+        float timeToCompleteAction = 2f;
+
         if(skill.skillType != global::Skill.SkillType.Heal) 
         {
-            IsSkill(character, characterReceptor, skill);
+            bool isSkill = IsSkill(character, characterReceptor, skill, out int outDamage); 
+            OnAttackStatus?.Invoke(this, new OnAttackStateEventArgs{
+                characterReceptor = this.characterReceptor,
+                attackStatus = isSkill,
+                damage = outDamage
+            });
+            // Attack status.
         }
         else // If the skill type is healing, you cannot fail the cast, therefore you use HealSkill.
         {
             HealSkill(characterReceptor, skill);
-            timeToCompleteAction = 1.5f;
+            timeToCompleteAction = 3f;
         }
 
+        // Invokes the event to show the animation.
         OnSkillCast?.Invoke(this, new OnSkillCastEventArgs{
-            skillType = skill.skillType
+            character = this.character,
+            skill = skill
         });
 
         Invoke("CallOnActionComplete", timeToCompleteAction);
@@ -100,9 +123,14 @@ public class SkillAction : BaseAction
 
     public override void TakeAction(Character characterReceptor, Action onActionComplete)
     {
-        Skill skill = character.GetCharacterData().GetSkillsList()[character.GetCharacterData().GetIndexSkill()];
+        Skill skill = GetCurrentSkill();
         this.characterReceptor = characterReceptor;
         this.onActionComplete = onActionComplete;
         ExecuteSkill(skill);
     }
+
+    public Skill GetCurrentSkill()
+    {
+        return character.GetCharacterData().GetSkillsList()[character.GetCharacterData().GetIndexSkill()];
+    } 
 }
