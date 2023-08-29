@@ -31,13 +31,12 @@ public class CharacterSkillActionCamera : MonoBehaviour
                 int randomAnimationGeneric = UnityEngine.Random.Range(0, cameraAnimationsGenericAvailable);
                 animationName += randomAnimationGeneric;
                 break;
-            case Skill.SkillType.Heal:
+            case SkillType.Heal:
                 animationName += "Heal";
                 int randomAnimationHeal = UnityEngine.Random.Range(0, cameraAnimationsHealAvailable);
                 animationName += randomAnimationHeal;
                 break;
         }
-        Debug.Log(animationName);
         animator.SetTrigger(animationName);
     }
 }

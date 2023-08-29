@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 09a8c29d3589ee846884326657fb4fba, type: 3}
-  m_Name: Ice
+  m_Name: AllFire
   m_EditorClassIdentifier: 
-  nameSkill: Ice
-  baseDamage: 5
-  baseMana: 3
+  nameSkill: All Fire
+  baseDamage: 10
+  baseMana: 10
   valueAI: 2
-  allReceiveDamage: 0
-  skillType: 1
+  allReceiveDamage: 1
+  skillType: 0

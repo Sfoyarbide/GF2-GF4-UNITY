@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class AttackAction : BaseAction
 {
-    // Add: GoBackToOrignalPlace.
+    // Add: GoBackToOriginalPlace.
 
     public event EventHandler OnAttackStarted;
     public event EventHandler OnAttackFinished;
@@ -73,7 +73,6 @@ public class AttackAction : BaseAction
         DefendAction.CancelDefend(characterReceptor); // Checks if the receptor is in defend mode, and executes the logic of canceling a defend.
 
         int newHp = hp - damage; // Final subtraction. 
-        Debug.Log(newHp);
         characterReceptor.SetHp(newHp); // Setting new hp value for the character receptor.
     }
 

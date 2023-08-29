@@ -250,7 +250,7 @@ MonoBehaviour:
   hp: 50
   hpMax: 50
   sp: 20
-  spMax: 0
+  spMax: 20
   lv: 0
   xp: 0
   xpForNextLevel: 0
@@ -278,6 +278,7 @@ MonoBehaviour:
   skillList:
   - {fileID: 11400000, guid: 8f995f56379502f438bc650392943a53, type: 2}
   - {fileID: 11400000, guid: a77a6ee7c4c459543b88eefb2cd70026, type: 2}
+  - {fileID: 11400000, guid: 843bdab217bd4c54caae8258114efe58, type: 2}
   indexSkill: 0
 --- !u!114 &8293950673850163479
 MonoBehaviour:

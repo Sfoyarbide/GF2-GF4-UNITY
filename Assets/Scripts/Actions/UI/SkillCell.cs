@@ -20,7 +20,7 @@ public class SkillCell : MonoBehaviour
         button.onClick.AddListener(() => 
         {
             actionsUI.SetSkillInCurrentPlayerByIndex(index);
-            CombatUniversalReference.Instance.GetSelectCharacterReceptor().SetupSelection(false);
+            CombatUniversalReference.Instance.GetSelectCharacterReceptor().SetupSelection(skill.allReceiveDamage, false);
             actionsUI.ShowSkillList();
         });
     }

@@ -39,13 +39,14 @@ public class CharacterAnimator : MonoBehaviour
         string castString = "Cast";
         switch(e.skill.skillType)
         {
-            case Skill.SkillType.Heal:
+            case SkillType.Heal:
                 castString += "Heal";
                 break;
             default:
                 castString += "Generic";
                 break;
         }
+        Debug.Log(e.skill.name + " - " + e.skill.skillType);
         animator.SetTrigger(castString);
     }
 

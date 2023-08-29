@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerInputCombat : MonoBehaviour
@@ -9,7 +10,7 @@ public class PlayerInputCombat : MonoBehaviour
     // NOTE: REWORK THIS SYSTEM.
     public static PlayerInputCombat Instance {get; private set;}
     private BattleManager battleManager;
-    private bool waitingAction;
+    [SerializeField] private bool waitingAction;
 
     private void Awake() 
     {
@@ -22,9 +23,14 @@ public class PlayerInputCombat : MonoBehaviour
         Instance = this;
     }
 
-    public void Setup(BattleManager battleManager)
+    private void Start() 
     {
-        this.battleManager = battleManager; 
+        CombatUniversalReference.Instance.GetBattleManager().OnTurnChanged += BattleManager_OnTurnChanged;
+    }
+
+    private void BattleManager_OnTurnChanged(object sender, BattleManager.OnTurnChangedEventArgs e)
+    {
+        SetWaitingInput(!e.currentCharacter.IsEnemy()); 
     }
 
     public bool GetWaitingAction()
@@ -39,7 +45,7 @@ public class PlayerInputCombat : MonoBehaviour
 
     public void HandleActionInput()
     {
-        if(Input.GetKeyDown(KeyCode.X))
+        if(Input.GetKeyDown(KeyCode.X) && waitingAction)
         {
             PlayerExecuteAction();
         }
@@ -75,17 +81,27 @@ public class PlayerInputCombat : MonoBehaviour
 
     public void PlayerExecuteAction()
     {
+        SelectCharacterReceptor selectCharacterReceptor = CombatUniversalReference.Instance.GetSelectCharacterReceptor();
         BaseAction baseAction = CombatUniversalReference.Instance.GetBattleManager().GetSelectedAction();
-        Character characterReceptor; 
+        List<Character> characterReceptorList = new List<Character>(); 
         if(baseAction as DefendAction)
         {
-            characterReceptor = CombatUniversalReference.Instance.GetBattleManager().GetCurrentCharacter();
+            Character currentCharacter = CombatUniversalReference.Instance.GetBattleManager().GetCurrentCharacter();
+            characterReceptorList.Add(currentCharacter);
+            CombatUniversalReference.Instance.GetBattleManager().ExecuteAction(characterReceptorList);
         }
-        else
+
+        if(selectCharacterReceptor.GetDealsAllPosibleReceptors())
         {
-            characterReceptor = CombatUniversalReference.Instance.GetSelectCharacterReceptor().GetCharacterReceptor();
+            characterReceptorList = selectCharacterReceptor.GetCharacterReceptorList();
+            CombatUniversalReference.Instance.GetBattleManager().ExecuteAction(characterReceptorList);
         }
-        CombatUniversalReference.Instance.GetBattleManager().ExecuteAction(characterReceptor);
+        if(!selectCharacterReceptor.GetDealsAllPosibleReceptors())
+        {
+            characterReceptorList.Add(selectCharacterReceptor.GetCharacterReceptor());
+            CombatUniversalReference.Instance.GetBattleManager().ExecuteAction(characterReceptorList[0]);
+        }
+
         waitingAction = false;
     }
 }

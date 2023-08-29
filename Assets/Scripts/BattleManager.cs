@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.PlasticSCM.Editor.WebApi;
 using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEngine;
 
@@ -10,13 +11,18 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private List<Character> enemyList;
     [SerializeField] private List<Character> allyList;
 
+    public event EventHandler<OnTurnChangedEventArgs> OnTurnChanged;
     public event EventHandler OnCharacterChanged;
     public event EventHandler<OnActionExecuteEventArgs> OnActionExecute;
+    public event EventHandler OnTurnEnd;
     public class OnActionExecuteEventArgs : EventArgs
     {
         public BaseAction action;
     }
-    public event EventHandler OnTurnEnd;
+    public class OnTurnChangedEventArgs : EventArgs
+    {
+        public Character currentCharacter;
+    }
 
     [SerializeField] private int indexTurn;
     [SerializeField] private BaseAction selectedAction;
@@ -27,6 +33,7 @@ public class BattleManager : MonoBehaviour
         SetupBattle(characterTurnList); // Temporal, need to be changed when doing "exploration" logic.
     }
 
+    // For a single character receptor.
     public void ExecuteAction(Character characterReceptor)
     {
         if(inAction) // Checks if it was already in action.
@@ -37,6 +44,24 @@ public class BattleManager : MonoBehaviour
         SetInAction(true); // Sets in action.
         
         selectedAction.TakeAction(characterReceptor, NextTurn); // Executes the wanted action.
+        CombatUniversalReference.Instance.GetSelectCharacterReceptor().CompleteSelection(); // Cancels the selection mode;
+        
+        OnActionExecute?.Invoke(this, new OnActionExecuteEventArgs{
+            action = selectedAction
+        });
+    }
+
+    // For multiple characters receptors.
+    public void ExecuteAction(List<Character> characterReceptorList)
+    {
+        if(inAction) // Checks if it was already in action.
+        {
+            return; 
+        }
+
+        SetInAction(true); // Sets in action.
+        
+        selectedAction.TakeAction(characterReceptorList, NextTurn); // Executes the wanted action.
         CombatUniversalReference.Instance.GetSelectCharacterReceptor().CompleteSelection(); // Cancels the selection mode;
         
         OnActionExecute?.Invoke(this, new OnActionExecuteEventArgs{
@@ -55,15 +80,10 @@ public class BattleManager : MonoBehaviour
 
     public void CheckTurn()
     {
-        if(!GetCurrentCharacter().IsEnemy())
-        {
-            // Waiting For Player Input Combat.
-            CombatUniversalReference.Instance.GetPlayerInputCombat().SetWaitingInput(true);
-        }
-        else
-        {
-            // Waiting For Enemy Decision.
-        }
+        // Sends information about the turn. 
+        OnTurnChanged?.Invoke(this, new OnTurnChangedEventArgs{
+            currentCharacter = GetCurrentCharacter()
+        });
     }
 
     public void NextTurn()
@@ -149,24 +169,12 @@ public class BattleManager : MonoBehaviour
 
     public void UpdateEnemyList()
     {
-        foreach(Character character in characterTurnList)
-        {
-            if(character.IsEnemy())
-            {
-                enemyList.Add(character);
-            }
-        }
+        enemyList = CombatCalculations.ObtainCharacterListByIsEnemy(characterTurnList, true);
     }
 
     public void UpdateAllyList()
     {
-        foreach(Character character in characterTurnList)
-        {
-            if(!character.IsEnemy())
-            {
-                allyList.Add(character);
-            }
-        }
+        allyList = CombatCalculations.ObtainCharacterListByIsEnemy(characterTurnList, false);
     }
 
     public List<Character> GetEnemyList()

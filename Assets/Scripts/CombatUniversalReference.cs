@@ -9,6 +9,7 @@ public class CombatUniversalReference : MonoBehaviour
     private SelectCharacterReceptor selectCharacterReceptor;
     private PlayerInputCombat playerInputCombat;
     private CombatCameraManager combatCameraManager;
+    private CombatEnemyAI combatEnemyAI;
 
     private void Awake() 
     {
@@ -27,6 +28,7 @@ public class CombatUniversalReference : MonoBehaviour
         selectCharacterReceptor = FindObjectOfType<SelectCharacterReceptor>();
         playerInputCombat = FindObjectOfType<PlayerInputCombat>();
         combatCameraManager = FindAnyObjectByType<CombatCameraManager>();
+        combatEnemyAI = FindAnyObjectByType<CombatEnemyAI>();
     }
 
     public BattleManager GetBattleManager()
@@ -47,5 +49,10 @@ public class CombatUniversalReference : MonoBehaviour
     public CombatCameraManager GetCombatCameraManager()
     {
         return combatCameraManager;
+    }
+
+    public CombatEnemyAI GetCombatEnemyAI()
+    {
+        return combatEnemyAI;
     }
 }

@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Heal
   m_EditorClassIdentifier: 
   nameSkill: Heal
-  baseDamage: 10
+  baseDamage: 15
   baseMana: 6
+  valueAI: 3
+  allReceiveDamage: 0
   skillType: 2

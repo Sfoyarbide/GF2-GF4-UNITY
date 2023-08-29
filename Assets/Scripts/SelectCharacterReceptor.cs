@@ -5,9 +5,14 @@ using UnityEngine;
 
 public class SelectCharacterReceptor : MonoBehaviour
 {
+    // Selects an enemy character by player input.
+
     [SerializeField] private List<Character> selectableCharacterList;
+    private bool canSelect;
+    private bool dealsAllPosibleReceptors;
     [SerializeField] private int index;
     public event EventHandler<OnSelectedCharacterReceptorEventArgs> OnSelectedCharacterReceptorChanged;
+    public event EventHandler<OnAllEnemysSelectedEventArgs> OnAllEnemySelected;
     public event EventHandler OnSelectedCharacterReceptorStarted;
     public event EventHandler OnSelectedCharacterReceptorCanceled;
     public event EventHandler OnSelectedCharacterReceptorComplete;
@@ -15,21 +20,40 @@ public class SelectCharacterReceptor : MonoBehaviour
     {
         public Character characterReceptor;
     }
-    private bool canSelect;
-
-    public void SetupSelection(bool invertCollection)
+    public class OnAllEnemysSelectedEventArgs : EventArgs
     {
-        UpdateSelectableCharacterList(invertCollection);
-        canSelect = true;
-        OnSelectedCharacterReceptorStarted?.Invoke(this, EventArgs.Empty);
-        OnSelectedCharacterReceptorChanged?.Invoke(this, new OnSelectedCharacterReceptorEventArgs{
-            characterReceptor = GetCharacterReceptor()
-        });
+        public List<Character> allEnemySelected;
     }
 
-    private void UpdateSelectableCharacterList(bool invertCollection)
+    public void SetupSelection(bool dealsAllPosibleReceptors, bool invertCollection)
     {
-        selectableCharacterList.Clear();
+        this.dealsAllPosibleReceptors = dealsAllPosibleReceptors;
+        UpdateSelectableCharacterList(this.dealsAllPosibleReceptors, invertCollection);
+        if(!dealsAllPosibleReceptors) // If not selects all enemys, then it means that is an indivual selection.
+        {
+            OnSelectedCharacterReceptorChanged?.Invoke(this, new OnSelectedCharacterReceptorEventArgs{
+                characterReceptor = GetCharacterReceptor()
+            });
+        }
+        else // If selects all enemys, then it means is a grupal selection.
+        {
+            OnAllEnemySelected?.Invoke(this, new OnAllEnemysSelectedEventArgs
+            {
+                allEnemySelected = selectableCharacterList
+            });
+        }
+        OnSelectedCharacterReceptorStarted?.Invoke(this, EventArgs.Empty);
+        canSelect = true;
+    }
+
+    private void UpdateSelectableCharacterList(bool selectsAllEnemys, bool invertCollection)
+    {
+        if(selectsAllEnemys) // If is a selection, that selects all, then it will be all the enemys selected.
+        {
+            selectableCharacterList.AddRange(CombatUniversalReference.Instance.GetBattleManager().GetEnemyList());
+            return;
+        }
+
         if(!invertCollection)
         {
             selectableCharacterList.AddRange(CombatUniversalReference.Instance.GetBattleManager().GetEnemyList()); // First the enemys in the collection.
@@ -42,20 +66,32 @@ public class SelectCharacterReceptor : MonoBehaviour
         }
     }
 
+    public bool GetDealsAllPosibleReceptors()
+    {
+        return dealsAllPosibleReceptors;
+    }
+
     public Character GetCharacterReceptor()
     {
         return selectableCharacterList[index];
     }
 
+    public List<Character> GetCharacterReceptorList()
+    {
+        return selectableCharacterList;
+    }
+
     public void CancelSelection()
     {
         OnSelectedCharacterReceptorCanceled?.Invoke(this, EventArgs.Empty);
+        selectableCharacterList.Clear();
         canSelect = false;
     }
 
     public void CompleteSelection()
     {
         OnSelectedCharacterReceptorComplete?.Invoke(this, EventArgs.Empty);
+        selectableCharacterList.Clear();
         canSelect = false;
     }
 
@@ -65,6 +101,12 @@ public class SelectCharacterReceptor : MonoBehaviour
         {
             return;
         }
+
+        if(dealsAllPosibleReceptors)
+        {
+            return;
+        }
+
         int previousIndex = index;
         index = PlayerInputCombat.Instance.MoveTheIndex(0, selectableCharacterList.Count - 1, index);
         if(previousIndex != index)

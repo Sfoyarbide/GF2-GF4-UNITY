@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -26,7 +25,12 @@ public class Character : MonoBehaviour
     // Actions
     [SerializeField] private List<BaseAction> baseActionList;
     // Events
+    public static event EventHandler<OnCharacterDeadEventArgs> OnCharacterDead;
     public event EventHandler<OnHpChangedEventArgs> OnHpChanged;
+    public class OnCharacterDeadEventArgs : EventArgs
+    {
+        public Character characterDead;
+    }
     public class OnHpChangedEventArgs : EventArgs
     {
         public bool isLessThanBefore;
@@ -48,6 +52,13 @@ public class Character : MonoBehaviour
         if(hp > hpMax)
         {
             hp = hpMax;
+        }
+
+        if(hp <= 0)
+        {
+            OnCharacterDead?.Invoke(this, new OnCharacterDeadEventArgs{
+                characterDead = this
+            });
         }
 
         if(hp < previousHp)
@@ -103,14 +114,24 @@ public class Character : MonoBehaviour
         lu = newValue;
     }
 
-    public int GetSt()
+    public int GetHpMax()
     {
-        return st;
+        return hpMax;
     }
 
     public int GetHp()
     {
         return hp;
+    }
+
+    public int GetSpMax()
+    {
+        return spMax;
+    }
+
+    public int GetSt()
+    {
+        return st;
     }
 
     public int GetSp()
@@ -181,6 +202,18 @@ public class Character : MonoBehaviour
     public List<BaseAction> GetBaseActionList()
     {
         return baseActionList;
+    }
+
+    public T GetAction<T>() where T : BaseAction
+    {
+        foreach(BaseAction baseAction in baseActionList)
+        {
+            if(baseAction is T)
+            {
+                return (T)baseAction;
+            }
+        }
+        return null;
     }
 
     public CharacterData GetCharacterData()

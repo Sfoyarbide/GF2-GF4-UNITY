@@ -33,7 +33,7 @@ public class ActionButtonUI : MonoBehaviour
                 if(!HasBeenPressed)
                 {
                     CombatUniversalReference.Instance.GetBattleManager().SetSelectedAction(baseAction);
-                    CombatUniversalReference.Instance.GetSelectCharacterReceptor().SetupSelection(false);
+                    CombatUniversalReference.Instance.GetSelectCharacterReceptor().SetupSelection(false, false);
                     HasBeenPressed = true;
                 }
                 else

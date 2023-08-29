@@ -14,7 +14,16 @@ public class CharacterSelectedVisual : MonoBehaviour
         selectCharacterReceptor.OnSelectedCharacterReceptorChanged += SelectCharacterReceptor_OnSelectedCharacterReceptorChanged;
         selectCharacterReceptor.OnSelectedCharacterReceptorCanceled += SelectCharacterReceptor_OnSelectedCharacterReceptorCanceled;
         selectCharacterReceptor.OnSelectedCharacterReceptorComplete += SelectCharacterReceptor_OnSelectedCharacterReceptorCompleted;
+        selectCharacterReceptor.OnAllEnemySelected += SelectCharacterReceptor_OnAllEnemySelected;
         selectedVisual.SetActive(false);
+    }
+
+    private void SelectCharacterReceptor_OnAllEnemySelected(object sender, SelectCharacterReceptor.OnAllEnemysSelectedEventArgs e)
+    {
+        if(e.allEnemySelected.Contains(character))
+        {
+            UpdateSelectedVisual(character);
+        }
     }
 
     private void SelectCharacterReceptor_OnSelectedCharacterReceptorCompleted(object sender, EventArgs e)

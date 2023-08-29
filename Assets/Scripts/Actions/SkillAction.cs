@@ -7,8 +7,10 @@ public class SkillAction : BaseAction
 {
     // NOTE: ADD THE ILLNESS MECHANIC.
     // REWORK THE ONACTIONCOMPLETE.
-    // REWORK GetSp.
-    private Character characterReceptor;
+    // CHECK FOR SP.
+
+
+    private List<Character> characterReceptorList;
     public static event EventHandler<OnSkillCastEventArgs> OnSkillCast;
     public static event EventHandler<OnAttackStateEventArgs> OnAttackStatus;
     public class OnSkillCastEventArgs : EventArgs
@@ -23,11 +25,15 @@ public class SkillAction : BaseAction
         public int damage;
     }
 
+    private void Start() 
+    {
+        characterReceptorList = new List<Character>();
+    }
+
     private static bool IsSkill(Character character, Character characterReceptor, Skill skill, out int outDamage)
     {  
         if(character.GetSp() < skill.baseMana)
         {
-            Debug.Log("No mana");
             outDamage = 0;
             return false;
         }
@@ -40,15 +46,16 @@ public class SkillAction : BaseAction
 
         int dice = UnityEngine.Random.Range(0, 10);
         
+        int newSp = character.GetSp() - skill.baseMana;
+        character.SetSp(newSp);
+
         if(CombatCalculations.CheckIsHit(characterChance, agCharacterReceptor, dice))
         {
-            Debug.Log("HitSkill");
             Skill(character, characterReceptor, skill, out outDamage);
             return true;
         }
         else
         {
-            Debug.Log("Miss");
             outDamage = 0;
             return false;
         }
@@ -70,7 +77,6 @@ public class SkillAction : BaseAction
         }
         
         int newHp = hp - damage;
-        Debug.Log("Skill Damage: " + newHp);
         characterReceptor.SetHp(newHp);
     }
 
@@ -87,23 +93,69 @@ public class SkillAction : BaseAction
         return "Skill";
     }
 
-    private void ExecuteSkill(Skill skill) // Does all visual and logic aspects of Skill Action.
+    // You use it, for having multiple Character receptors or for one, to use one skill. 
+    private void InvokeSkillToCharacterReceptorList(List<Character> characterReceptorList, Skill skill, bool dealsAllPosibleReceptors)
     {
-        float timeToCompleteAction = 2f;
-
-        if(skill.skillType != global::Skill.SkillType.Heal) 
+        if(dealsAllPosibleReceptors)
         {
-            bool isSkill = IsSkill(character, characterReceptor, skill, out int outDamage); 
+            foreach(Character characterReceptor in characterReceptorList)
+            {
+                bool isSkill = IsSkill(character, characterReceptor, skill, out int outDamage); 
+                OnAttackStatus?.Invoke(this, new OnAttackStateEventArgs{
+                    characterReceptor = characterReceptor,
+                    attackStatus = isSkill,
+                    damage = outDamage
+                });
+            }
+        }
+        else
+        {
+            bool isSkill = IsSkill(character, characterReceptorList[0], skill, out int outDamage); 
             OnAttackStatus?.Invoke(this, new OnAttackStateEventArgs{
-                characterReceptor = this.characterReceptor,
+                characterReceptor = characterReceptorList[0],
                 attackStatus = isSkill,
                 damage = outDamage
             });
-            // Attack status.
         }
-        else // If the skill type is healing, you cannot fail the cast, therefore you use HealSkill.
+    }
+
+    // You use it, for having multiple Character receptors or for one, to use one heal skill. 
+    private void InvokeHealSkillToCharacterReceptorList(List<Character> characterReceptorList, Skill skill, bool dealsAllPosibleReceptors)
+    {
+        if(dealsAllPosibleReceptors)
         {
-            HealSkill(characterReceptor, skill);
+            foreach(Character characterReceptor in characterReceptorList)
+            {
+                HealSkill(characterReceptor, skill);
+                OnAttackStatus?.Invoke(this, new OnAttackStateEventArgs{
+                    characterReceptor = characterReceptor,
+                    attackStatus = true,
+                    damage = skill.baseDamage
+                });
+            }
+        }
+        else
+        {
+            HealSkill(characterReceptorList[0], skill);
+            OnAttackStatus?.Invoke(this, new OnAttackStateEventArgs{
+                    characterReceptor = characterReceptorList[0],
+                    attackStatus = true,
+                    damage = skill.baseDamage
+            });
+        }
+    }
+    
+    private void ExecuteSkill(Skill skill, bool dealsAllPosibleReceptors) // Does all visual and logic aspects of Skill Action.
+    {
+        float timeToCompleteAction = 2f;
+
+        if(skill.skillType != SkillType.Heal) 
+        {
+            InvokeSkillToCharacterReceptorList(characterReceptorList, skill, dealsAllPosibleReceptors);
+        }
+        else // If the skill type is healing, you cannot fail the cast, therefore you use HealSkill function.
+        {
+            InvokeHealSkillToCharacterReceptorList(characterReceptorList, skill, dealsAllPosibleReceptors);
             timeToCompleteAction = 3f;
         }
 
@@ -119,14 +171,23 @@ public class SkillAction : BaseAction
     private void CallOnActionComplete()
     {
         onActionComplete();
+        characterReceptorList.Clear();
     }
 
     public override void TakeAction(Character characterReceptor, Action onActionComplete)
     {
         Skill skill = GetCurrentSkill();
-        this.characterReceptor = characterReceptor;
+        this.characterReceptorList.Add(characterReceptor);
         this.onActionComplete = onActionComplete;
-        ExecuteSkill(skill);
+        ExecuteSkill(skill, false);
+    }
+
+    public override void TakeAction(List<Character> characterReceptorList, Action onActionComplete)
+    {
+        Skill skill = GetCurrentSkill();
+        this.characterReceptorList = characterReceptorList;
+        this.onActionComplete = onActionComplete;
+        ExecuteSkill(skill, true);
     }
 
     public Skill GetCurrentSkill()

@@ -15,4 +15,6 @@ MonoBehaviour:
   nameSkill: Fire
   baseDamage: 20
   baseMana: 5
+  valueAI: 2
+  allReceiveDamage: 0
   skillType: 0
