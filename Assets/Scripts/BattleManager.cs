@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.PlasticSCM.Editor.WebApi;
-using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEngine;
 
 public class BattleManager : MonoBehaviour
@@ -10,7 +8,14 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private List<Character> characterTurnList;
     [SerializeField] private List<Character> enemyList;
     [SerializeField] private List<Character> allyList;
-
+    [SerializeField] private int indexTurn;
+    [SerializeField] private BaseAction selectedAction;
+    [SerializeField] private bool inCombat;
+    [SerializeField] private int xpGainForBattle;
+    private bool inAction;
+    public event EventHandler OnBattleStart;
+    public event EventHandler OnWin;
+    public event EventHandler OnDefeat;
     public event EventHandler<OnTurnChangedEventArgs> OnTurnChanged;
     public event EventHandler OnCharacterChanged;
     public event EventHandler<OnActionExecuteEventArgs> OnActionExecute;
@@ -22,15 +27,6 @@ public class BattleManager : MonoBehaviour
     public class OnTurnChangedEventArgs : EventArgs
     {
         public Character currentCharacter;
-    }
-
-    [SerializeField] private int indexTurn;
-    [SerializeField] private BaseAction selectedAction;
-    private bool inAction;
-
-    private void Start() 
-    {
-        SetupBattle(characterTurnList); // Temporal, need to be changed when doing "exploration" logic.
     }
 
     // For a single character receptor.
@@ -71,30 +67,69 @@ public class BattleManager : MonoBehaviour
 
     public void SetupBattle(List<Character> newCharacterTurnList)
     {
+        inCombat = true;
+
         SetCharacterTurnList(newCharacterTurnList);
-        CheckTurn();
         UpdateEnemyList();
         UpdateAllyList();
-        OnCharacterChanged?.Invoke(this, EventArgs.Empty);
-    }
 
-    public void CheckTurn()
-    {
+        OnBattleStart?.Invoke(this, EventArgs.Empty);
+
         // Sends information about the turn. 
         OnTurnChanged?.Invoke(this, new OnTurnChangedEventArgs{
             currentCharacter = GetCurrentCharacter()
         });
+
+        OnCharacterChanged?.Invoke(this, EventArgs.Empty);
+
+        // Calculation of the xp gained for the battle.
+        xpGainForBattle = LevelSystem.XpGainForBattle(enemyList);
+    }
+
+    public void CheckTurn()
+    {
+        UpdateEnemyList();
+        UpdateAllyList();
+
+        // Win the battle.
+        if(enemyList.Count == 0) 
+        {
+            Win();   
+        }
+
+        // Lose the battle
+        if(allyList.Count == 0)
+        {
+            Loss();
+        }
     }
 
     public void NextTurn()
     {
+        // Updating and checking if has been won or lose
+        CheckTurn();
+
+        if(!inCombat)
+        {
+            return;
+        }
+
+        // Previous turn end.
         OnTurnEnd?.Invoke(this, EventArgs.Empty);
+
+        // Dequeueing current character and setting in action in false.
         DequeueCurrentCharacter(); 
         SetInAction(false);
-        CheckTurn();
-        UpdateEnemyList();
-        UpdateAllyList();
+
+        // Sends information about the turn. 
+        OnTurnChanged?.Invoke(this, new OnTurnChangedEventArgs{
+            currentCharacter = GetCurrentCharacter()
+        });
+
+        // The current character changed.
         OnCharacterChanged?.Invoke(this, EventArgs.Empty);
+
+        // Sets a default base action to the selected action.
         SetSelectedAction(GetCurrentCharacter().GetDefaultBaseAction());
     }
 
@@ -167,12 +202,12 @@ public class BattleManager : MonoBehaviour
         AddCharacterInTurns(character, 0);
     }
 
-    public void UpdateEnemyList()
+    private void UpdateEnemyList()
     {
         enemyList = CombatCalculations.ObtainCharacterListByIsEnemy(characterTurnList, true);
     }
 
-    public void UpdateAllyList()
+    private void UpdateAllyList()
     {
         allyList = CombatCalculations.ObtainCharacterListByIsEnemy(characterTurnList, false);
     }
@@ -185,5 +220,25 @@ public class BattleManager : MonoBehaviour
     public List<Character> GetAllyList()
     {
         return allyList;
+    }
+
+    private void Win()
+    {
+        inCombat = false;
+        inAction = false;
+        characterTurnList.Clear();
+
+        LevelSystem.AddXpGainInBattle(xpGainForBattle, allyList);
+
+        OnWin?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void Loss()
+    {
+        inCombat = false;
+        inAction = false;
+        characterTurnList.Clear();
+        
+        OnDefeat?.Invoke(this, EventArgs.Empty);
     }
 }

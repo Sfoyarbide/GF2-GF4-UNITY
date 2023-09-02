@@ -8,7 +8,6 @@ public class TestingScript : MonoBehaviour
     [SerializeField] Character character;
     [SerializeField] BattleManager battleManager;
 
-
     private void Update() 
     {
         if(Input.GetKeyDown(KeyCode.T)) // For level system test
@@ -19,9 +18,9 @@ public class TestingScript : MonoBehaviour
             Debug.Log(LevelSystem.IsLevelUp(character));
         }
         CombatUniversalReference.Instance.GetPlayerInputCombat().HandleActionInput(); // For Input.
-        if(Input.GetKeyDown(KeyCode.Y)) // For level system test
+        if(Input.GetKeyDown(KeyCode.Y)) 
         {  
-            Debug.Log(CombatCalculations.ObtainCharacterWithLessHp(CombatUniversalReference.Instance.GetBattleManager().GetCharacterTurnList(), true));
+            CombatUniversalReference.Instance.GetBattleSetup().SetupBattle();
         }
     }
 }

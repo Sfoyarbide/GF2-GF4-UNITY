@@ -9,10 +9,34 @@ public class LevelSystem : MonoBehaviour
         character.SetXpForNextLevel(GetXpForNextLevel(character.GetLv()));
     }
 
+    public static void AddXpGainInBattle(int xpGainForBattle, List<Character> characterList)
+    {
+        for(int x = 0; x < characterList.Count; x++)
+        {
+            int newXp = characterList[x].GetXp() + xpGainForBattle;
+            characterList[x].SetXp(newXp);
+            IsLevelUp(characterList[x]);
+        }
+    }
+
+    public static int XpGainForBattle(List<Character> characterAIList)
+    {
+        float xpSumUp = 0;
+        float exponent = 1.5f;
+
+        foreach(Character characterAI in characterAIList)
+        {
+            xpSumUp += Mathf.Pow(characterAI.GetLv(), exponent); 
+        }
+
+        int xpGainForBattle = Mathf.RoundToInt(xpSumUp);
+        return xpGainForBattle;
+    }
+
     public static int GetXpForNextLevel(int level)
     {
         float exponent = 1.5f; // Exponent for the formula, the bigger the number, the more time will be spend.
-        float baseExp = 1000f; // Starting point.
+        float baseExp = 100f; // Starting point.
         return Mathf.RoundToInt(baseExp * (Mathf.Pow(level, exponent))); // The formula for next xp.
     }
 
@@ -55,5 +79,7 @@ public class LevelSystem : MonoBehaviour
                     break;
             }
         }
+
+        character.SetXp(0);
     }
 }

@@ -49,7 +49,7 @@ public class PlayerInputCombat : MonoBehaviour
         {
             PlayerExecuteAction();
         }
-    }
+    } 
 
     public int MoveTheIndex(int min, int max, int index, KeyCode keyCodeLeft=KeyCode.Q, KeyCode keyCodeRight=KeyCode.E)
     {
@@ -88,7 +88,7 @@ public class PlayerInputCombat : MonoBehaviour
         {
             Character currentCharacter = CombatUniversalReference.Instance.GetBattleManager().GetCurrentCharacter();
             characterReceptorList.Add(currentCharacter);
-            CombatUniversalReference.Instance.GetBattleManager().ExecuteAction(characterReceptorList);
+            CombatUniversalReference.Instance.GetBattleManager().ExecuteAction(characterReceptorList[0]);
         }
 
         if(selectCharacterReceptor.GetDealsAllPosibleReceptors())
@@ -96,7 +96,7 @@ public class PlayerInputCombat : MonoBehaviour
             characterReceptorList = selectCharacterReceptor.GetCharacterReceptorList();
             CombatUniversalReference.Instance.GetBattleManager().ExecuteAction(characterReceptorList);
         }
-        if(!selectCharacterReceptor.GetDealsAllPosibleReceptors())
+        if(!selectCharacterReceptor.GetDealsAllPosibleReceptors() && baseAction as DefendAction == false)
         {
             characterReceptorList.Add(selectCharacterReceptor.GetCharacterReceptor());
             CombatUniversalReference.Instance.GetBattleManager().ExecuteAction(characterReceptorList[0]);

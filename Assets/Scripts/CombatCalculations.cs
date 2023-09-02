@@ -85,4 +85,6 @@ public class CombatCalculations
         hpMaxSum /= percent;
         return hpMaxSum;
     }
+
+    
 }

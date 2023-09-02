@@ -20,12 +20,18 @@ public class CombatCameraManager : MonoBehaviour
         CombatUniversalReference.Instance.GetBattleManager().OnCharacterChanged += BattleManager_OnCharacterChanged;
         CombatUniversalReference.Instance.GetBattleManager().OnActionExecute += BattleManager_OnActionExecute; 
         CombatUniversalReference.Instance.GetBattleManager().OnTurnEnd += BattleManager_OnTurnEnd;
+        CombatUniversalReference.Instance.GetBattleManager().OnBattleStart += BattleManager_OnBattleStart;
         CombatUniversalReference.Instance.GetSelectCharacterReceptor().OnSelectedCharacterReceptorStarted += SelectCharacterReceptor_OnSelectedCharacterReceptorStarted; 
         CombatUniversalReference.Instance.GetSelectCharacterReceptor().OnSelectedCharacterReceptorChanged += SelectCharacterReceptor_OnSelectedCharacterReceptorChanged;
         CombatUniversalReference.Instance.GetSelectCharacterReceptor().OnSelectedCharacterReceptorCanceled += SelectCharacterReceptor_OnSelectedCharacterReceptorCanceled;
-        SetAllCamerasToState(false, characterSkillActionCamera.gameObject);
-        characterSelectedCamera.gameObject.SetActive(true);
         currentCamera = characterSelectedCamera.gameObject;
+    }
+
+    private void BattleManager_OnBattleStart(object sender, EventArgs e)
+    {
+        Debug.Log("HERE");
+        SetAllCamerasToState(false, characterSkillActionCamera.gameObject);
+        ChangeCamera(characterSelectedCamera.gameObject);
         UpdateCharacterSelectedCamera();
     }
 

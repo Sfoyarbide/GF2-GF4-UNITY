@@ -19,8 +19,7 @@ public class ActionsUI : MonoBehaviour
         actionButtonList = new List<Transform>();
         skillCellList = new List<Transform>();
         CombatUniversalReference.Instance.GetBattleManager().OnCharacterChanged += BattleManager_OnCharacterChanged;
-        CreateActionButtons();
-        CreateSkillCells();
+        CombatUniversalReference.Instance.GetBattleManager().OnBattleStart += BattleManager_OnBattleStart;
     }
 
     private void CreateActionButtons()
@@ -42,6 +41,12 @@ public class ActionsUI : MonoBehaviour
             Destroy(transform.gameObject);
         }
         actionButtonList.Clear();
+    }
+
+    private void BattleManager_OnBattleStart(object sender, EventArgs e)
+    {
+        CreateActionButtons();
+        CreateSkillCells();
     }
 
     private void BattleManager_OnCharacterChanged(object sender, EventArgs e)

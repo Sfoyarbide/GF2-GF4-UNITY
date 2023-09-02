@@ -10,6 +10,7 @@ public class CombatUniversalReference : MonoBehaviour
     private PlayerInputCombat playerInputCombat;
     private CombatCameraManager combatCameraManager;
     private CombatEnemyAI combatEnemyAI;
+    private BattleSetup battleSetup;
 
     private void Awake() 
     {
@@ -29,6 +30,7 @@ public class CombatUniversalReference : MonoBehaviour
         playerInputCombat = FindObjectOfType<PlayerInputCombat>();
         combatCameraManager = FindAnyObjectByType<CombatCameraManager>();
         combatEnemyAI = FindAnyObjectByType<CombatEnemyAI>();
+        battleSetup = FindAnyObjectByType<BattleSetup>();
     }
 
     public BattleManager GetBattleManager()
@@ -54,5 +56,10 @@ public class CombatUniversalReference : MonoBehaviour
     public CombatEnemyAI GetCombatEnemyAI()
     {
         return combatEnemyAI;
+    }
+
+    public BattleSetup GetBattleSetup()
+    {
+        return battleSetup;
     }
 }
